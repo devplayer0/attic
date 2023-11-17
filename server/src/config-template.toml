@@ -78,6 +78,9 @@ path = "%storage_path%"
 # Set this if you are using an S3-compatible object storage (e.g., Minio).
 #endpoint = "https://xxx.r2.cloudflarestorage.com"
 
+# Allow a custom endpoint to use virtual host-style bucket URLs.
+#allow_virtual_host = false
+
 # Credentials
 #
 # If unset, the credentials are read from the `AWS_ACCESS_KEY_ID` and

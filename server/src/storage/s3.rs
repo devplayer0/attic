@@ -5,11 +5,11 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use aws_sdk_s3::{
-    operation::get_object::builders::GetObjectFluentBuilder,
     config::Builder as S3ConfigBuilder,
-    types::{CompletedMultipartUpload, CompletedPart},
-    presigning::PresigningConfig,
     config::{Credentials, Region},
+    operation::get_object::builders::GetObjectFluentBuilder,
+    presigning::PresigningConfig,
+    types::{CompletedMultipartUpload, CompletedPart},
     Client,
 };
 use bytes::BytesMut;
@@ -46,6 +46,9 @@ pub struct S3StorageConfig {
     ///
     /// Set this if you are using an S3-compatible object storage (e.g., Minio).
     endpoint: Option<String>,
+
+    /// Allow a custom endpoint to use virtual host-style bucket URLs.
+    allow_virtual_host: bool,
 
     /// S3 credentials.
     ///
@@ -107,7 +110,9 @@ impl S3Backend {
         }
 
         if let Some(endpoint) = &config.endpoint {
-            builder = builder.endpoint_url(endpoint).force_path_style(true);
+            builder = builder
+                .endpoint_url(endpoint)
+                .force_path_style(!config.allow_virtual_host);
         }
 
         Ok(builder)
@@ -141,7 +146,11 @@ impl S3Backend {
         Ok((client, file))
     }
 
-    async fn get_download(&self, req: GetObjectFluentBuilder, prefer_stream: bool) -> ServerResult<Download> {
+    async fn get_download(
+        &self,
+        req: GetObjectFluentBuilder,
+        prefer_stream: bool,
+    ) -> ServerResult<Download> {
         if prefer_stream {
             let output = req.send().await.map_err(ServerError::storage_error)?;
 
